@@ -55,13 +55,15 @@ async function sortHackerNewsArticles() {
     console.log("Success: Articles are correctly sorted from newest to oldest!");
   } else {
     console.log("Error: Articles are not properly sorted. Here is the correct order:");
-    
-    // Sort articles by timestamp (newest first) and display
-    const sortedArticles = [...articles].sort((a, b) => b.timestamp - a.timestamp);
-    sortedArticles.forEach((article, index) => {
-      console.log(`${index + 1}. ${article.title} (${article.timestamp.toISOString()})`);
-    });
   }
+
+  // Sort and display all articles regardless of sort status
+  console.log("\nList of 60 newest articles:");
+  console.log("----------------------------");
+  const sortedArticles = [...articles].sort((a, b) => b.timestamp - a.timestamp);
+  sortedArticles.forEach((article, index) => {
+    console.log(`${index + 1}. ${article.title}`);
+  });
 
   await browser.close();
 }
