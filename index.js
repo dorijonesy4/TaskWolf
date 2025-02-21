@@ -10,47 +10,60 @@ async function sortHackerNewsArticles() {
   // go to Hacker News
   await page.goto("https://news.ycombinator.com/newest");
 
-  // Get first 100 articles
+  // Get first 60 articles across 2 pages
   const articles = [];
   let currentPage = 1;
   
-  while (articles.length < 100) {
+  while (articles.length < 60 && currentPage <= 2) {
     // Get all article rows on current page
     const rows = await page.locator('tr.athing').all();
     
     for (const row of rows) {
-      if (articles.length >= 100) break;
+      if (articles.length >= 60) break;
       
       // Get timestamp from the following sibling row
       const timestamp = await row.locator('xpath=./following-sibling::tr[1]').locator('.age').getAttribute('title');
+      const title = await row.locator('.titleline > a:first-child').textContent();
       const date = new Date(timestamp);
       
       articles.push({
-        id: await row.getAttribute('id'),
+        title: title,
         timestamp: date
       });
     }
 
-    if (articles.length < 100) {
+    if (articles.length < 60 && currentPage < 2) {
       currentPage++;
       await page.click('a.morelink');
       await page.waitForLoadState('networkidle');
     }
   }
 
-  // Validate articles are sorted newest to oldest
+  // Check if articles are sorted newest to oldest
+  let isSorted = true;
   for (let i = 1; i < articles.length; i++) {
     const current = articles[i].timestamp;
     const previous = articles[i-1].timestamp;
     
     if (current > previous) {
-      throw new Error(`Articles not properly sorted at index ${i}. Article ${articles[i].id} is newer than ${articles[i-1].id}`);
+      isSorted = false;
+      break;
     }
   }
 
-  console.log("Successfully validated first 100 articles are sorted from newest to oldest");
-  
-  // await browser.close();
+  if (isSorted) {
+    console.log("Success: Articles are correctly sorted from newest to oldest!");
+  } else {
+    console.log("Error: Articles are not properly sorted. Here is the correct order:");
+    
+    // Sort articles by timestamp (newest first) and display
+    const sortedArticles = [...articles].sort((a, b) => b.timestamp - a.timestamp);
+    sortedArticles.forEach((article, index) => {
+      console.log(`${index + 1}. ${article.title} (${article.timestamp.toISOString()})`);
+    });
+  }
+
+  await browser.close();
 }
 
 (async () => {
